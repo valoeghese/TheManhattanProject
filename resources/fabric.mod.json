@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "manhattan_project",
+  "version": "1.0.0",
+
+  "name": "",
+  "description": "",
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "tk.valoeghese.manhattan.ManhattanProject"
+    ]
+  },
+  "mixins": [
+    "manhattan_project.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.4.0",
+    "fabric": "*"
+  }
+}
