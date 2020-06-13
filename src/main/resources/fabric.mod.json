@@ -3,8 +3,8 @@
   "id": "manhattan_project",
   "version": "1.0.0",
 
-  "name": "",
-  "description": "",
+  "name": "The Manhattan Project",
+  "description": "This mod is like a box of chocolates. You never know what you're gonna get.",
   "license": "MIT",
   "environment": "*",
   "entrypoints": {

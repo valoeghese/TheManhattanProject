@@ -3,9 +3,10 @@
   "package": "tk.valoeghese.manhattan.mixin",
   "compatibilityLevel": "JAVA_8",
   "mixins": [
-  ],
-  "client": [
-  ],
-  "server": [
+  	"FunniWorldGetter",
+    "MixinFunniBiome",
+    "MixinFunniChatHook",
+    "MixinFunniSaveData",
+    "MixinSurfaceChunkGenerator"
   ]
 }
