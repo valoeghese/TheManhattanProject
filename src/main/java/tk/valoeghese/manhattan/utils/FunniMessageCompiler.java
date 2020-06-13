@@ -3,6 +3,8 @@ package tk.valoeghese.manhattan.utils;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
+
 public class FunniMessageCompiler {
 	public static byte[] compile(String message) {
 		byte[] hash = SHA1.digest(message.getBytes());
