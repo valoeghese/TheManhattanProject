@@ -19,14 +19,14 @@ public class MixinFunniBiome {
 		if ((Object) this == GenBiome.INSTANCE) {
 			float noise = (float) FunniMessageCompiler.NOISE.sample((double) GenBiome.xCache / 12.0, (double) GenBiome.zCache / 12.0);
 
-			int chunkX = GenBiome.xCache >> 4;
-			int chunkZ = GenBiome.zCache >> 4;
+			int chunkX = GenBiome.xCache >> 2;
+			int chunkZ = GenBiome.zCache >> 2;
 
-			int upperChunkX = chunkX + 1;
-			int upperChunkZ = chunkZ + 1;
+			int upperChunkX = ((GenBiome.xCache >> 1) + 1) >> 1;
+			int upperChunkZ = ((GenBiome.zCache >> 1) + 1) >> 1;
 
-			float xProgress = (float) (GenBiome.xCache & 4) / 4.0f;
-			float zProgress = (float) (GenBiome.zCache & 4) / 4.0f;
+			float xProgress = (float) (GenBiome.xCache & 2) / 2.0f;
+			float zProgress = (float) (GenBiome.zCache & 2) / 2.0f;
 
 			NoiseProperties LOWER_LEFT = FunniChunkData.getNoiseProperties(GenBiome.server, chunkX, chunkZ);
 			NoiseProperties UPPER_LEFT = FunniChunkData.getNoiseProperties(GenBiome.server, upperChunkX, chunkZ);
@@ -43,9 +43,9 @@ public class MixinFunniBiome {
 
 			if (gDepthVariation > 1.3f && gDepthVariation < 1.5f && gDepth > 0.23f) {
 				if (gDepthVariation < 1.4f) {
-					noise = noise > 0.12f ? 2 : 0;
+					noise = noise > 0.12f ? 2.8f : 0;
 				} else {
-					noise = noise > 0.12f ? 0 : 2;
+					noise = noise > 0.12f ? 0 : 2.8f;
 				}
 			}
 
@@ -67,6 +67,10 @@ public class MixinFunniBiome {
 				}
 			}
 
+			if (GenBiome.original.getDepth() > 0.3) {
+				noise += (GenBiome.original.getDepth() / 2);
+			}
+
 			// System.out.println(noise);
 			info.setReturnValue(noise);
 		}
@@ -75,14 +79,14 @@ public class MixinFunniBiome {
 	@Inject(at = @At("HEAD"), method = "getScale", cancellable = true)
 	private void genScale(CallbackInfoReturnable<Float> info) {
 		if ((Object) this == GenBiome.INSTANCE) {
-			int chunkX = (GenBiome.xCache >> 4);
-			int chunkZ = (GenBiome.zCache >> 4);
+			int chunkX = (GenBiome.xCache >> 2);
+			int chunkZ = GenBiome.zCache >> 2;
 
-			int upperChunkX = chunkX + 1;
-			int upperChunkZ = chunkZ + 1;
+			int upperChunkX = ((GenBiome.xCache >> 1) + 1) >> 1;
+			int upperChunkZ = ((GenBiome.zCache >> 1) + 1) >> 1;
 
-			float xProgress = (float) (GenBiome.xCache & 4) / 4.0f;
-			float zProgress = (float) (GenBiome.zCache & 4) / 4.0f;
+			float xProgress = (float) (GenBiome.xCache & 2) / 2.0f;
+			float zProgress = (float) (GenBiome.zCache & 2) / 2.0f;
 
 			NoiseProperties LOWER_LEFT = FunniChunkData.getNoiseProperties(GenBiome.server, chunkX, chunkZ);
 			NoiseProperties UPPER_LEFT = FunniChunkData.getNoiseProperties(GenBiome.server, upperChunkX, chunkZ);
@@ -92,7 +96,15 @@ public class MixinFunniBiome {
 			float gScale = MathHelper.lerp(xProgress,
 					MathHelper.lerp(zProgress, LOWER_LEFT.scale, UPPER_LEFT.scale),
 					MathHelper.lerp(zProgress, LOWER_RIGHT.scale, UPPER_RIGHT.scale));
-			
+
+			if (gScale < -0.01f) { // idk if this is neccesary
+				gScale = -0.02f;
+			}
+
+			if (GenBiome.original.getScale() > 0.45f && gScale < 0.45f) {
+				gScale += 0.4f;
+			}
+
 			info.setReturnValue(gScale);
 		}
 	}

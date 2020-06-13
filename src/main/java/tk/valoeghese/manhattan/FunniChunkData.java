@@ -82,8 +82,8 @@ public final class FunniChunkData {
 
 				if (data[index++] == 0) {
 					d += clampMap((float) currentProgram[index++], -128f, 128f, -0.5f, 1.4f);
-					scale += clampMap((float) currentProgram[index++], -128f, 128f, -0.01f, 0.55f);
-					t += clampMap((float) currentProgram[index++], -128f, 128f, 0.0f, 1.8f);
+					scale += clampMap((float) currentProgram[index++], -128f, 128f, -0.03f, 0.43f);
+					t += clampMap((float) currentProgram[index++], -128f, 128f, 0.0f, 1.78f);
 				}
 			}
 
