@@ -40,6 +40,7 @@ public abstract class MixinSurfaceChunkGenerator {
 			server = ((MinecraftClient) game).getServer();
 		}
 
+		GenBiome.server = server;
 		FunniChunkData.load(server);
 		GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, seaLevel, gz);
 		GenBiome.xCache = gx;
@@ -52,7 +53,10 @@ public abstract class MixinSurfaceChunkGenerator {
 			target = "Lnet/minecraft/world/ChunkRegion;getBiome(Lnet/minecraft/util/math/BlockPos;)Lnet/minecraft/world/biome/Biome;"
 			))
 	private Biome yeet2(ChunkRegion originalProvider, BlockPos pos) {
-		FunniChunkData.load(((FunniWorldGetter) originalProvider).getWorld().getServer());
+		MinecraftServer server = ((FunniWorldGetter) originalProvider).getWorld().getServer();
+		FunniChunkData.load(server);
+		GenBiome.server = server;
+
 		GenBiome.original = originalProvider.getBiome(pos);
 		GenBiome.nether = this.defaultBlock.getBlock() == Blocks.NETHERRACK;
 		return GenBiome.INSTANCE;

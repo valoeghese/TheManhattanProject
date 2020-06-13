@@ -3,6 +3,7 @@ package tk.valoeghese.manhattan.biome;
 import java.util.Random;
 
 import net.minecraft.block.BlockState;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.biome.BambooJungleBiome;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
@@ -15,13 +16,11 @@ public final class GenBiome extends BambooJungleBiome {
 	public static int xCache;
 	public static int zCache;
 
-	public static float gDepth;
-	public static float gDepthVariation;
-	public static float gScale;
-
 	public static Biome original;
 	public static boolean nether;
 	public static SurfaceConfigProvider config;
+
+	public static MinecraftServer server;
 
 	@Override
 	public void buildSurface(Random random, Chunk chunk, int x, int z, int worldHeight, double noise, BlockState defaultBlock, BlockState defaultFluid, int seaLevel, long seed) {
