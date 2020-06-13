@@ -41,6 +41,7 @@ public abstract class MixinSurfaceChunkGenerator {
 		}
 
 		FunniChunkData.load(server);
+		GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, seaLevel, gz);
 		GenBiome.xCache = gx;
 		GenBiome.zCache = gz;
 		return GenBiome.INSTANCE;

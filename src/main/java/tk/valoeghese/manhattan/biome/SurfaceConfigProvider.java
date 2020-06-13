@@ -3,6 +3,7 @@ package tk.valoeghese.manhattan.biome;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import it.unimi.dsi.fastutil.bytes.ByteList;
@@ -19,6 +20,7 @@ public class SurfaceConfigProvider {
 
 	private ByteList predicateTypes = new ByteArrayList();
 	private List<Surface> surfaces = new ArrayList<>();
+	private AtomicInteger surfaceCategory = new AtomicInteger(-1);
 
 	public void setNether(boolean nether) {
 		for (Surface surface : this.surfaces) {
@@ -34,7 +36,7 @@ public class SurfaceConfigProvider {
 	 */
 	public void add(byte type, byte b2, byte b3) {
 		this.predicateTypes.add(type);
-		this.surfaces.add(Surface.create(b2, b3));
+		this.surfaces.add(Surface.create(b2, b3, this.surfaceCategory));
 	}
 
 	public TernarySurfaceConfig getSurface(Random rand, int x, int z, boolean nether) {
@@ -97,25 +99,29 @@ public class SurfaceConfigProvider {
 		final BlockState netherUnder;
 		boolean cachedNether;
 
-		public static Surface create(byte upper, byte lower) {
+		public static Surface create(byte upper, byte lower, AtomicInteger category) {
 			int combined = ((upper & 0xff) << 8) | ((lower & 0xff));
 
 			if (last == null || combined != cache.intValue()) {
 				cache = combined;
 				RAND.setSeed(combined);
-				return create();
+				return create(category);
 			}
 
 			return last;
 		}
 
-		private static Surface create() {
+		private static Surface create(AtomicInteger category) {
 			BlockState netherTop = ManhattanProject.TOP_SURFACE_BLOCKS_NETHER.get(RAND.nextInt(ManhattanProject.TOP_SURFACE_BLOCKS_NETHER.size()));;
 			BlockState netherUnder = ManhattanProject.UNDER_SURFACE_BLOCKS_NETHER.get(RAND.nextInt(ManhattanProject.UNDER_SURFACE_BLOCKS_NETHER.size()));;
 			BlockState top = Blocks.AIR.getDefaultState();
 			BlockState under = Blocks.AIR.getDefaultState();
 
-			switch (RAND.nextInt(3)) {
+			if (category.get() == -1) {
+				category.set(RAND.nextInt(3));
+			}
+
+			switch (category.get()) {
 			case 0: // normal
 				top = ManhattanProject.TOP_SURFACE_BLOCKS.get(RAND.nextInt(ManhattanProject.TOP_SURFACE_BLOCKS.size()));
 				under = ManhattanProject.UNDER_SURFACE_BLOCKS.get(RAND.nextInt(ManhattanProject.UNDER_SURFACE_BLOCKS.size()));

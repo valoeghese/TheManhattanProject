@@ -19,12 +19,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.WorldProperties;
 import tk.valoeghese.manhattan.biome.GenBiome;
+import tk.valoeghese.manhattan.biome.NoiseProperties;
 import tk.valoeghese.manhattan.biome.SurfaceConfigProvider;
 import tk.valoeghese.manhattan.utils.FunniMessageCompiler;
 
 public final class FunniChunkData {
 	public static void setProgram(String message) {
 		System.out.println("Setting program");
+		long time = System.currentTimeMillis();
+
 		if (message != currentMessage) {
 			currentMessage = message;
 
@@ -34,6 +37,8 @@ public final class FunniChunkData {
 
 			genBiomeData();
 		}
+
+		System.out.println("Set program in " + (System.currentTimeMillis() - time) + "ms");
 	}
 
 	private static void genBiomeData() {
@@ -81,10 +86,18 @@ public final class FunniChunkData {
 			WorldProperties wp = server.getSaveProperties().getMainWorldProperties();
 
 			if (wp != properties) {
-				properties = wp;
-				saveFile(server);
+				File nextFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "manhattan_project.yes");
 
-				currentFile = new File(server.getSavePath(WorldSavePath.ROOT).toFile(), "manhattan_project.yes");
+				if (currentFile != null && currentFile != nextFile) { // to stop it saving empty or a prior load time's stuff to the one it's trying to load's file when it should just load existing data
+					saveFile(server);
+				}
+
+				properties = wp;
+				currentFile = nextFile;
+
+				if (!currentFile.exists()) {
+					return; // nothing to load
+				}
 
 				System.out.println("Loading Manhattan Project World Data");
 
@@ -119,6 +132,38 @@ public final class FunniChunkData {
 			t.printStackTrace();
 			throw t instanceof RuntimeException ? ((RuntimeException) t) : new RuntimeException(t);
 		}
+	}
+
+	public NoiseProperties getNoiseProperties(MinecraftServer server, int chunkX, int chunkZ) {
+		byte[] data = getOrCreateData(server, chunkX, chunkZ);
+
+		float d = 0;
+		float scale = 0;
+		float t = 0;
+
+		for (int i = 0; i < 5; ++i) {
+			int index = i * 4;
+
+			if (data[index++] == 0) {
+				d += clampMap((float) currentProgram[index++], -128f, 128f, -0.5f, 1.4f);
+				scale += clampMap((float) currentProgram[index++], -128f, 128f, -0.01f, 0.3f);
+				t += clampMap((float) currentProgram[index++], -128f, 128f, 0.0f, 2.0f);
+			}
+		}
+
+		if (d < -1.0f) {
+			if (d < -1.8f) {
+				d= -1.8f;
+			}
+
+			t /= 5;
+		}
+
+		if (scale < -0.01f) {
+			scale = -0.01f;
+		}
+
+		return new NoiseProperties(d, scale, t);
 	}
 
 	@Nullable

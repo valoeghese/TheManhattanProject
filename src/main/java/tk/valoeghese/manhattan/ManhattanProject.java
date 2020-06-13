@@ -30,7 +30,12 @@ public class ManhattanProject implements ModInitializer {
 		// ----------------------
 
 		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.RED_SAND.getDefaultState());
+		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.RED_SAND.getDefaultState());
 		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.SAND.getDefaultState());
+		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.SAND.getDefaultState());
+
+		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.GRASS.getDefaultState());
+		TOP_SURFACE_BLOCKS_SANDY.add(Blocks.GRAVEL.getDefaultState());
 
 		// ----------------------
 

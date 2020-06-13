@@ -7,6 +7,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.world.biome.Biome;
 import tk.valoeghese.manhattan.biome.GenBiome;
+import tk.valoeghese.manhattan.biome.NoiseProperties;
 import tk.valoeghese.manhattan.utils.FunniMessageCompiler;
 
 @Mixin(Biome.class)
@@ -25,7 +26,33 @@ public class MixinFunniBiome {
 			}
 
 			noise = (float) (GenBiome.gDepth + GenBiome.gDepthVariation * noise);
-//			System.out.println(noise);
+
+			int chunkX = GenBiome.xCache >> 4;
+			int chunkZ = GenBiome.zCache >> 4;
+
+			int upperChunkX = chunkX + 1;
+			int upperChunkZ = chunkZ + 1;
+
+			double xProgress = (GenBiome.xCache & 4) / 4;
+			double zProgress = (GenBiome.zCache & 4) / 4;
+
+			//NoiseProperties
+			// oceans are oceans.
+			if (GenBiome.original.getCategory() == Biome.Category.OCEAN) {
+				if (noise > -0.2) {
+					if (noise < 0) {
+						noise = -0.2f;
+					} else {
+						noise = -0.2f * noise;
+
+						while (noise < -1.8) {
+							noise /= 2;
+						}
+					}
+				}
+			}
+
+			// System.out.println(noise);
 			info.setReturnValue(noise);
 		}
 	}
@@ -33,7 +60,7 @@ public class MixinFunniBiome {
 	@Inject(at = @At("HEAD"), method = "getScale", cancellable = true)
 	private void genScale(CallbackInfoReturnable<Float> info) {
 		if ((Object) this == GenBiome.INSTANCE) {
-//			System.out.println("Scale = " + GenBiome.gScale);
+			// System.out.println("Scale = " + GenBiome.gScale);
 			info.setReturnValue(GenBiome.gScale);
 		}
 	}
