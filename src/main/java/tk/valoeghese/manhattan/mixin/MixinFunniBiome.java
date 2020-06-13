@@ -17,7 +17,7 @@ public class MixinFunniBiome {
 	@Inject(at = @At("HEAD"), method = "getDepth", cancellable = true)
 	private void genDepth(CallbackInfoReturnable<Float> info) {
 		if ((Object) this == GenBiome.INSTANCE) {
-			float noise = (float) FunniMessageCompiler.NOISE.sample((double) GenBiome.xCache / 12.0, (double) GenBiome.zCache / 12.0);
+			float resultDepth = (float) FunniMessageCompiler.NOISE.sample((double) GenBiome.xCache / 12.0, (double) GenBiome.zCache / 12.0);
 
 			int chunkX = GenBiome.xCache >> 2;
 			int chunkZ = GenBiome.zCache >> 2;
@@ -43,36 +43,40 @@ public class MixinFunniBiome {
 
 			if (gDepthVariation > 1.3f && gDepthVariation < 1.5f && gDepth > 0.23f) {
 				if (gDepthVariation < 1.4f) {
-					noise = noise > 0.12f ? 2.8f : 0;
+					resultDepth = resultDepth > 0.12f ? 2.8f : 0;
 				} else {
-					noise = noise > 0.12f ? 0 : 2.8f;
+					resultDepth = resultDepth > 0.12f ? 0 : 2.8f;
 				}
 			}
 
-			noise = (float) (gDepth + gDepthVariation * noise);
+			resultDepth = (float) (gDepth + gDepthVariation * resultDepth);
 
 			//NoiseProperties
 			// oceans are oceans.
 			if (GenBiome.original.getCategory() == Biome.Category.OCEAN) {
-				if (noise > -0.2) {
-					if (noise < 0) {
-						noise = -0.2f;
+				if (resultDepth > -0.3) {
+					if (resultDepth < 0) {
+						resultDepth = -0.3f;
 					} else {
-						noise = -0.2f * noise;
+						resultDepth = -0.3f * resultDepth;
 
-						while (noise < -1.8) {
-							noise /= 2;
+						if (resultDepth > -0.3f) {
+							resultDepth = 0.3f;
+						} else {
+							while (resultDepth < -1.8) {
+								resultDepth /= 2;
+							}
 						}
 					}
 				}
 			}
 
 			if (GenBiome.original.getDepth() > 0.3) {
-				noise += (GenBiome.original.getDepth() / 2);
+				resultDepth += (GenBiome.original.getDepth() / 2);
 			}
 
 			// System.out.println(noise);
-			info.setReturnValue(noise);
+			info.setReturnValue(resultDepth);
 		}
 	}
 
