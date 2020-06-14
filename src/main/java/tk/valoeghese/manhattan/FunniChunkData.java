@@ -47,14 +47,15 @@ public final class FunniChunkData {
 	}
 
 	private static void genBiomeData() {
+		//TODO less scale - add subtractive + clamp
 		System.out.println("Generating Manhattan Project Biome Data");
+		List<ConfiguredFeature<?, ?>> features = new ArrayList<>();
 
 		// write GenBiome stuff
 		GenBiome.config = new SurfaceConfigProvider();
-		Random featureRandom = new Random(0);
-		Random settingRandom = new Random(0);
-
-		List<ConfiguredFeature<?, ?>> features = new ArrayList<>();
+		Random featureRandom = new Random(currentProgram[8]); // random indices chosen for no reason aside from they're not the key types.
+		Random settingRandom = new Random(currentProgram[2]);
+		ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3));
 
 		for (int i = 0; i < 5; ++i) {
 			int index = i * 4;
@@ -74,7 +75,6 @@ public final class FunniChunkData {
 				settingRandom.setSeed(((b2 & 0xff) << 8) | ((b3 & 0xff)));
 
 				ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3));
-
 				break;
 			}
 		}

@@ -36,8 +36,12 @@ public abstract class MixinSurfaceChunkGenerator {
 
 		if (game instanceof MinecraftDedicatedServer) {
 			server = (MinecraftServer) game;
-		} else if (game instanceof MinecraftClient){
+		} else if (game instanceof MinecraftClient) {
 			server = ((MinecraftClient) game).getServer();
+		}
+
+		if (server == null) {
+			throw new RuntimeException("Y be there no server object this is unacceptable - valo");
 		}
 
 		GenBiome.server = server;
