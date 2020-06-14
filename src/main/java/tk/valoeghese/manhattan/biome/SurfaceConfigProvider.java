@@ -1,6 +1,7 @@
 package tk.valoeghese.manhattan.biome;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -21,6 +22,7 @@ public class SurfaceConfigProvider {
 	private ByteList predicateTypes = new ByteArrayList();
 	private List<Surface> surfaces = new ArrayList<>();
 	private AtomicInteger surfaceCategory = new AtomicInteger(-1);
+	public List<BlockState> validSurfaceStates = new ArrayList<>();
 
 	public void setNether(boolean nether) {
 		for (Surface surface : this.surfaces) {
@@ -36,7 +38,7 @@ public class SurfaceConfigProvider {
 	 */
 	public void add(byte type, byte b2, byte b3) {
 		this.predicateTypes.add(type);
-		this.surfaces.add(Surface.create(b2, b3, this.surfaceCategory));
+		this.surfaces.add(Surface.create(b2, b3, this.surfaceCategory, this.validSurfaceStates));
 	}
 
 	public TernarySurfaceConfig getSurface(Random rand, /*int ox, int oz,*/ int x, int z, boolean nether) {
@@ -108,19 +110,19 @@ public class SurfaceConfigProvider {
 		final BlockState netherUnder;
 		boolean cachedNether;
 
-		public static Surface create(byte upper, byte lower, AtomicInteger category) {
+		public static Surface create(byte upper, byte lower, AtomicInteger category, Collection<BlockState> validSurfaceStates) {
 			int combined = ((upper & 0xff) << 8) | ((lower & 0xff));
 
 			if (last == null || combined != cache.intValue()) {
 				cache = combined;
 				RAND.setSeed(combined);
-				return create(category);
+				return create(category, validSurfaceStates);
 			}
 
 			return last;
 		}
 
-		private static Surface create(AtomicInteger category) {
+		private static Surface create(AtomicInteger category, Collection<BlockState> validSurfaceStates) {
 			BlockState netherTop = ManhattanProject.TOP_SURFACE_BLOCKS_NETHER.get(RAND.nextInt(ManhattanProject.TOP_SURFACE_BLOCKS_NETHER.size()));;
 			BlockState netherUnder = ManhattanProject.UNDER_SURFACE_BLOCKS_NETHER.get(RAND.nextInt(ManhattanProject.UNDER_SURFACE_BLOCKS_NETHER.size()));;
 			BlockState top = Blocks.AIR.getDefaultState();
@@ -145,6 +147,8 @@ public class SurfaceConfigProvider {
 				break;
 			}
 
+			validSurfaceStates.add(top);
+			validSurfaceStates.add(netherTop);
 			Surface next = new Surface(top, under, netherTop, netherUnder);
 			return last = next;
 		}

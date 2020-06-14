@@ -7,7 +7,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -20,6 +22,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.gen.feature.ConfiguredFeature;
 import tk.valoeghese.manhattan.biome.GenBiome;
 import tk.valoeghese.manhattan.biome.NoiseProperties;
 import tk.valoeghese.manhattan.biome.SurfaceConfigProvider;
@@ -51,6 +54,8 @@ public final class FunniChunkData {
 		Random featureRandom = new Random(0);
 		Random settingRandom = new Random(0);
 
+		List<ConfiguredFeature<?, ?>> features = new ArrayList<>();
+
 		for (int i = 0; i < 5; ++i) {
 			int index = i * 4;
 
@@ -68,15 +73,17 @@ public final class FunniChunkData {
 				featureRandom.setSeed(((b1 & 0xff) << 8) | ((b2 & 0xff)));
 				settingRandom.setSeed(((b2 & 0xff) << 8) | ((b3 & 0xff)));
 
-				int count = featureRandom.nextInt(2);
-
-				while (count --> 0) {
-					
-				}
+				ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3));
 
 				break;
 			}
 		}
+
+		GenBiome.INSTANCE.setVegetalFeatures(setter -> {
+			for (ConfiguredFeature<?, ?> feature : features) {
+				setter.accept(feature);
+			}
+		});
 	}
 
 	/**
