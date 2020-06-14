@@ -19,7 +19,6 @@ import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 import tk.valoeghese.manhattan.FunniChunkData;
 import tk.valoeghese.manhattan.biome.GenBiome;
-import tk.valoeghese.manhattan.utils.FunniMessageCompiler;
 
 @Mixin(SurfaceChunkGenerator.class)
 public abstract class MixinSurfaceChunkGenerator {
@@ -44,8 +43,8 @@ public abstract class MixinSurfaceChunkGenerator {
 		GenBiome.server = server;
 		FunniChunkData.load(server);
 		GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, seaLevel, gz);
-		GenBiome.xCache = gx + (int) (4 * FunniMessageCompiler.NOISE.sample((double) gz * 0.12f));
-		GenBiome.zCache = gz + (int) (4 * FunniMessageCompiler.NOISE.sample((double) (gx + 9) * 0.12f));;
+		GenBiome.xCache = gx;
+		GenBiome.zCache = gz;
 		return GenBiome.INSTANCE;
 	}
 

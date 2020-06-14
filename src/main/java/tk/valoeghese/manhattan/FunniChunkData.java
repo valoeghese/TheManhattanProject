@@ -7,6 +7,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Arrays;
+import java.util.Random;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -46,6 +48,8 @@ public final class FunniChunkData {
 
 		// write GenBiome stuff
 		GenBiome.config = new SurfaceConfigProvider();
+		Random featureRandom = new Random(0);
+		Random settingRandom = new Random(0);
 
 		for (int i = 0; i < 5; ++i) {
 			int index = i * 4;
@@ -57,10 +61,49 @@ public final class FunniChunkData {
 				byte subType = currentProgram[index++];
 				GenBiome.config.add(subType, currentProgram[index++], currentProgram[index++]);
 				break;
-			case 2:
+			case 2: // feature
+				byte b1 = currentProgram[index++];
+				byte b2 = currentProgram[index++];
+				byte b3 = currentProgram[index++];
+				featureRandom.setSeed(((b1 & 0xff) << 8) | ((b2 & 0xff)));
+				settingRandom.setSeed(((b2 & 0xff) << 8) | ((b3 & 0xff)));
+
+				int count = featureRandom.nextInt(2);
+
+				while (count --> 0) {
+					
+				}
+
 				break;
 			}
 		}
+	}
+
+	/**
+	 * Pick a surface config provider.
+	 * @param server the minecraft server instance.
+	 * @param configProvider the original config provider.
+	 * @return either the original or a new, preferred config provider.
+	 */
+	public static SurfaceConfigProvider getSurfaceProvider(MinecraftServer server, SurfaceConfigProvider configProvider, int chunkX, int chunkZ) {
+		byte[] data = getData(server, chunkX, chunkZ);
+
+		if (data == null || Arrays.equals(data, currentProgram)) {
+			return configProvider;
+		}
+
+		configProvider = new SurfaceConfigProvider();
+
+		for (int i = 0; i < 5; ++i) {
+			int index = i * 4;
+
+			if (currentProgram[index++] == 1) {
+				byte subType = currentProgram[index++];
+				configProvider.add(subType, currentProgram[index++], currentProgram[index++]);
+			}
+		}
+
+		return configProvider;
 	}
 
 	/**

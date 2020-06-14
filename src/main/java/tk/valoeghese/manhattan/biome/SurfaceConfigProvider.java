@@ -39,9 +39,18 @@ public class SurfaceConfigProvider {
 		this.surfaces.add(Surface.create(b2, b3, this.surfaceCategory));
 	}
 
-	public TernarySurfaceConfig getSurface(Random rand, int x, int z, boolean nether) {
+	public TernarySurfaceConfig getSurface(Random rand, /*int ox, int oz,*/ int x, int z, boolean nether) {
+		/*int ocx = (ox >> 4);
+		int ocz = (oz >> 4);
+		int cx = (x >> 4);
+		int cz = (z >> 4);
+
+		if (ocx != cx || ocz != cz) {
+			return FunniChunkData.getSurfaceProvider(GenBiome.server, this, ocx, ocz).getSurface(rand, ox, oz, ox, oz, nether);
+		}*/
+
 		if (this.predicateTypes.isEmpty()) {
-			return SurfaceBuilder.GRASS_CONFIG;
+			return nether ? SurfaceBuilder.NETHER_CONFIG : SurfaceBuilder.GRASS_CONFIG;
 		} else {
 			int length = this.predicateTypes.size();
 
