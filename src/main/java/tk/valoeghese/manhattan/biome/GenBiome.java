@@ -31,7 +31,7 @@ public final class GenBiome extends BambooJungleBiome {
 	public static MinecraftServer server;
 
 	public void setVegetalFeatures(Consumer<Consumer<ConfiguredFeature<?, ?>>> vegetalFeatureProvider) {
-		this.features.clear();
+		this.features.get(GenerationStep.Feature.VEGETAL_DECORATION).clear();
 
 		vegetalFeatureProvider.accept(cf -> this.addFeature(GenerationStep.Feature.VEGETAL_DECORATION, cf));
 	}
@@ -54,7 +54,7 @@ public final class GenBiome extends BambooJungleBiome {
 	@Override
 	public void generateFeatureStep(GenerationStep.Feature step, StructureAccessor structureAccessor, ChunkGenerator chunkGenerator, ServerWorldAccess serverWorldAccess, long populationSeed, ChunkRandom chunkRandom, BlockPos pos) {
 		if (step == GenerationStep.Feature.VEGETAL_DECORATION) {
-			this.generateFeatureStep(step, structureAccessor, chunkGenerator, serverWorldAccess, populationSeed, chunkRandom, pos);
+			super.generateFeatureStep(step, structureAccessor, chunkGenerator, serverWorldAccess, populationSeed, chunkRandom, pos);
 		} else {
 			original.generateFeatureStep(step, structureAccessor, chunkGenerator, serverWorldAccess, populationSeed, chunkRandom, pos);
 		}
