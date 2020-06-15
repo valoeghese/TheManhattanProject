@@ -129,7 +129,13 @@ public class SurfaceConfigProvider {
 			BlockState under = Blocks.AIR.getDefaultState();
 
 			if (category.get() == -1) {
-				category.set(RAND.nextInt(3));
+				int b = RAND.nextInt(5);
+
+				if (b == 2) {
+					category.set(2);
+				} else {
+					category.set(b % 3);
+				}
 			}
 
 			switch (category.get()) {
@@ -145,6 +151,8 @@ public class SurfaceConfigProvider {
 				top = ManhattanProject.TOP_SURFACE_BLOCKS_COLD.get(RAND.nextInt(ManhattanProject.TOP_SURFACE_BLOCKS_COLD.size()));
 				under = ManhattanProject.UNDER_SURFACE_BLOCKS_COLD.get(RAND.nextInt(ManhattanProject.UNDER_SURFACE_BLOCKS_COLD.size()));
 				break;
+			default:
+				throw new RuntimeException("If you get this error Valo is an idiot");
 			}
 
 			validSurfaceStates.add(top);

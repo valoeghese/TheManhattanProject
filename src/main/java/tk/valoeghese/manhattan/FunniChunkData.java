@@ -21,8 +21,13 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.WorldSavePath;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.gen.decorator.CountDecoratorConfig;
+import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
+import net.minecraft.world.gen.feature.DefaultBiomeFeatures;
+import net.minecraft.world.gen.feature.Feature;
 import tk.valoeghese.manhattan.biome.GenBiome;
 import tk.valoeghese.manhattan.biome.NoiseProperties;
 import tk.valoeghese.manhattan.biome.SurfaceConfigProvider;
@@ -47,7 +52,6 @@ public final class FunniChunkData {
 	}
 
 	private static void genBiomeData() {
-		//TODO less scale - add subtractive + clamp
 		System.out.println("Generating Manhattan Project Biome Data");
 		List<ConfiguredFeature<?, ?>> features = new ArrayList<>();
 
@@ -55,7 +59,9 @@ public final class FunniChunkData {
 		GenBiome.config = new SurfaceConfigProvider();
 		Random featureRandom = new Random(currentProgram[8]); // random indices chosen for no reason aside from they're not the key types.
 		Random settingRandom = new Random(currentProgram[2]);
-		ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3));
+		ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(2) + 2);
+		features.add(Feature.RANDOM_PATCH.configure(DefaultBiomeFeatures.SUGAR_CANE_CONFIG)
+				.createDecoratedFeature(Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(10) + 5))));
 
 		for (int i = 0; i < 5; ++i) {
 			int index = i * 4;
@@ -74,7 +80,7 @@ public final class FunniChunkData {
 				featureRandom.setSeed(((b1 & 0xff) << 8) | ((b2 & 0xff)));
 				settingRandom.setSeed(((b2 & 0xff) << 8) | ((b3 & 0xff)));
 
-				ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3));
+				ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(3) + 1);
 				break;
 			}
 		}
@@ -131,9 +137,9 @@ public final class FunniChunkData {
 				int index = i * 4;
 
 				if (data[index++] == 0) {
-					d += clampMap((float) currentProgram[index++], -128f, 128f, -0.5f, 1.4f);
-					scale += clampMap((float) currentProgram[index++], -128f, 128f, -0.03f, 0.43f);
-					t += clampMap((float) currentProgram[index++], -128f, 128f, 0.0f, 1.78f);
+					d += clampMap((float) currentProgram[index++], -128f, 128f, -0.5f, 1.5f);
+					scale += clampMap((float) currentProgram[index++], -128f, 128f, -0.1f, 0.43f);
+					t += clampMap((float) currentProgram[index++], -128f, 128f, -0.2f, 1.82f);
 				}
 			}
 
@@ -147,6 +153,10 @@ public final class FunniChunkData {
 
 			if (scale < -0.01f) {
 				scale = -0.01f;
+			}
+
+			if (t < 0.0f) {
+				t = 0.0f;
 			}
 
 			result = new NoiseProperties(d, scale, t);
@@ -203,7 +213,12 @@ public final class FunniChunkData {
 				currentFile = nextFile;
 
 				if (!currentFile.exists()) {
-					return; // nothing to load
+					// nothing to load
+					// but set something to the program anyway, to make new worlds original
+					System.out.println("Generating New World Manhattan Project World Data");
+					currentProgram = FunniMessageCompiler.compile(String.valueOf(server.getWorld(World.OVERWORLD).getSeed()));
+					genBiomeData();
+					return;
 				}
 
 				System.out.println("Loading Manhattan Project World Data");

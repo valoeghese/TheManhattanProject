@@ -6,7 +6,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.source.BiomeSource;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
+import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
+import tk.valoeghese.manhattan.ManhattanProject;
 import tk.valoeghese.manhattan.biome.GenBiome;
+import tk.valoeghese.manhattan.utils.DimIDGetter;
 
 @Mixin(ChunkGenerator.class)
 public class MixinFunniTreez {
@@ -15,7 +18,16 @@ public class MixinFunniTreez {
 			target = "Lnet/minecraft/world/biome/source/BiomeSource;getBiomeForNoiseGen(III)Lnet/minecraft/world/biome/Biome;"
 			))
 	private Biome yeet(BiomeSource originalProvider, int gx, int gy, int gz) {
-		GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, gy, gz);
-		return GenBiome.INSTANCE;
+		if (((Object) this) instanceof SurfaceChunkGenerator) {
+			if (ManhattanProject.populateVegetation && ((DimIDGetter) this).manhattan_getDimID().equals(ManhattanProject.dimensionType)) {
+				GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, gy, gz);
+
+				if (ManhattanProject.overwriteModded || ManhattanProject.vanillaBiomes.contains(GenBiome.original)) {
+					return GenBiome.INSTANCE;
+				}
+			}
+		}
+
+		return originalProvider.getBiomeForNoiseGen(gx, gy, gz);
 	}
 }

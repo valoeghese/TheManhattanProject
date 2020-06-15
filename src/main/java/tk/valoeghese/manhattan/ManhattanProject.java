@@ -1,19 +1,33 @@
 package tk.valoeghese.manhattan;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import com.google.common.collect.ImmutableList;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.LeavesBlock;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.biome.Biomes;
+import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.decorator.CocoaBeansTreeDecorator;
 import net.minecraft.world.gen.decorator.ConfiguredDecorator;
@@ -42,13 +56,86 @@ import net.minecraft.world.gen.trunk.ForkingTrunkPlacer;
 import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
 import net.minecraft.world.gen.trunk.TrunkPlacer;
 import tk.valoeghese.manhattan.biome.GenBiome;
+import tk.valoeghese.zoesteriaconfig.api.ZoesteriaConfig;
+import tk.valoeghese.zoesteriaconfig.api.container.Container;
+import tk.valoeghese.zoesteriaconfig.api.container.WritableConfig;
+import tk.valoeghese.zoesteriaconfig.api.deserialiser.Comment;
+import tk.valoeghese.zoesteriaconfig.api.template.ConfigTemplate;
 
 @SuppressWarnings("rawtypes")
 public class ManhattanProject implements ModInitializer {
-
 	@SuppressWarnings("unchecked")
 	@Override
 	public void onInitialize() {
+		try {
+			/*
+			if (configFile.createNewFile()) {
+				config = ZoesteriaConfig.createWritableConfig(new LinkedHashMap<>());
+				config.addComment("== Manhattan Project Config ==");
+				config.putStringValue("dimensionType", "minecraft:overworld");
+				config.putBooleanValue("treatLikeNether", false);
+				config.addComment("Whether to replace the generation of non-vanilla biomes.");
+				config.putBooleanValue("overwriteModdedBiomes", false);
+
+				EditableContainer advanced = ZoesteriaConfig.createWritableConfig(new LinkedHashMap<>());
+				advanced.addComment("Whether The Manhattan Project will replace the chunk shape stage");
+				advanced.putBooleanValue("shapeChunk", true);
+				advanced.addComment("Whether The Manhattan Project will replace the 'build surface' stage");
+				advanced.putBooleanValue("replaceSurfaceBlocks", true);
+				advanced.addComment("Whether The Manhattan Project will replace the vegetal decoration (trees, grasses) stage");
+				advanced.putBooleanValue("populateVegetation", true);
+
+				config.putMap("advanced", advanced.asMap());
+			} else {
+				config = ZoesteriaConfig.loadConfig(configFile);
+			}*/
+
+			File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "manhattan_project.cfg");
+			configFile.createNewFile();
+
+			WritableConfig config = ZoesteriaConfig.loadConfigWithDefaults(configFile, ConfigTemplate.builder()
+					.addComment(new Comment("== Manhattan Project Config =="))
+					.addDataEntry("dimensionType", "minecraft:overworld")
+					.addDataEntry("treatLikeNether", false)
+					.addComment(new Comment(" Whether to replace the generation of non-vanilla biomes."))
+					.addDataEntry("overwriteModdedBiomes", false)
+					.addContainer("advanced", container -> container
+							.addComment(new Comment(" Whether The Manhattan Project will replace the chunk shape stage"))
+							.addDataEntry("shapeChunk", true)
+							.addComment(new Comment(" Whether The Manhattan Project will replace the 'build surface' stage"))
+							.addDataEntry("replaceSurfaceBlocks", true)
+							.addComment(new Comment(" Whether The Manhattan Project will replace the vegetal decoration (trees, grasses) stage"))
+							.addDataEntry("populateVegetation", true)
+							)
+					.build());
+
+			config.writeToFile(configFile);
+
+			dimensionType = new Identifier(config.getStringValue("dimensionType"));
+			netherGen = config.getBooleanValue("treatLikeNether");
+			overwriteModded = config.getBooleanValue("overwriteModdedBiomes");
+
+			Container advanced = config.getContainer("advanced");
+			shapeChunk = advanced.getBooleanValue("shapeChunk");
+			replaceSurfaceBlocks = advanced.getBooleanValue("replaceSurfaceBlocks");
+			populateVegetation = advanced.getBooleanValue("populateVegetation");
+		} catch (IOException e) {
+			throw new UncheckedIOException("Error loading config for The Manhattan Project", e);
+		}
+
+		// initialize biomes before hacky reflection!
+		Biomes.DEFAULT.hashCode();
+
+		try {
+			for (Field field : Biomes.class.getFields()) {
+				if (Biome.class.isAssignableFrom(field.getType())) {
+					vanillaBiomes.add((Biome) field.get(null));
+				}
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Error collecting vanilla biomes", e);
+		}
+
 		// tags don't exist until world load
 		// hardcode go brrrrrrrrrrr
 		TOP_SURFACE_BLOCKS.add(Blocks.GRASS_BLOCK.getDefaultState());
@@ -121,8 +208,8 @@ public class ManhattanProject implements ModInitializer {
 		TREE_TYPES.add(new Pair<>(Blocks.JUNGLE_LOG.getDefaultState(), Blocks.OAK_LEAVES.getDefaultState())); // palm
 		TREE_TYPES.add(new Pair<>(Blocks.ACACIA_LOG.getDefaultState(), Blocks.ACACIA_LEAVES.getDefaultState()));
 		TREE_TYPES.add(new Pair<>(Blocks.DARK_OAK_LOG.getDefaultState(), Blocks.DARK_OAK_LEAVES.getDefaultState()));
-		TREE_TYPES.add(new Pair<>(Blocks.CRIMSON_STEM.getDefaultState(), Blocks.CRIMSON_NYLIUM.getDefaultState()));
-		TREE_TYPES.add(new Pair<>(Blocks.WARPED_STEM.getDefaultState(), Blocks.WARPED_NYLIUM.getDefaultState()));
+		TREE_TYPES.add(new Pair<>(Blocks.CRIMSON_STEM.getDefaultState(), Blocks.NETHER_WART_BLOCK.getDefaultState()));
+		TREE_TYPES.add(new Pair<>(Blocks.WARPED_STEM.getDefaultState(), Blocks.WARPED_WART_BLOCK.getDefaultState()));
 
 		FEATURE_CONFIG_FACTORIES.put(TreeFeatureConfig.class, rand -> {
 			Pair<BlockState, BlockState> type = TREE_TYPES.get(rand.nextInt(TREE_TYPES.size()));
@@ -157,6 +244,10 @@ public class ManhattanProject implements ModInitializer {
 			Pair<BlockState, BlockState> type = TREE_TYPES.get(rand.nextInt(TREE_TYPES.size()));
 			BlockState hat = type.getRight();
 
+			if (hat.getBlock() instanceof LeavesBlock) {
+				hat = hat.with(LeavesBlock.PERSISTENT, true);
+			}
+
 			boolean notShroom = hat.getBlock() != Blocks.WARPED_WART_BLOCK && hat.getBlock() != Blocks.NETHER_WART_BLOCK;
 
 			return new HugeFungusFeatureConfig(validSurface, type.getLeft(), hat, notShroom ? hat : Blocks.SHROOMLIGHT.getDefaultState(), false);
@@ -188,46 +279,48 @@ public class ManhattanProject implements ModInitializer {
 					features.add(Feature.RANDOM_PATCH.configure(
 							new RandomPatchFeatureConfig.Builder(new SimpleBlockStateProvider(GRASSES.get(settingRandom.nextInt(GRASSES.size()))), SimpleBlockPlacer.field_24871).build()
 							).createDecoratedFeature(
-									Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(30) + 4))
+									Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(19) + 4))
 									));
 					break;
-				case 1: // flower preset
+				case 1: // flower preset or grass preset
 					RandomPatchFeatureConfig r = null;
 
-					switch (settingRandom.nextInt(4)) {
+					int i = settingRandom.nextInt(12);
+
+					switch (i & 0b11) {
 					case 0:
-						r = DefaultBiomeFeatures.FOREST_FLOWER_CONFIG;
+						r = i == 0 ? DefaultBiomeFeatures.FOREST_FLOWER_CONFIG : DefaultBiomeFeatures.BLUE_ORCHID_CONFIG;
 						break;
 					case 1:
-						r = DefaultBiomeFeatures.DEFAULT_FLOWER_CONFIG;
+						r = i == 1 ? DefaultBiomeFeatures.ROSE_BUSH_CONFIG : DefaultBiomeFeatures.DEFAULT_FLOWER_CONFIG;
 						break;
 					case 2:
-						r = DefaultBiomeFeatures.PLAINS_FLOWER_CONFIG;
+						r = i == 2 ? DefaultBiomeFeatures.DEAD_BUSH_CONFIG : DefaultBiomeFeatures.PLAINS_FLOWER_CONFIG;
 						break;
 					case 3:
-						r = DefaultBiomeFeatures.SUNFLOWER_CONFIG;
+						r = i == 3 ? DefaultBiomeFeatures.SUNFLOWER_CONFIG : DefaultBiomeFeatures.TALL_GRASS_CONFIG;
 						break;
 					}
 
 					features.add(Feature.RANDOM_PATCH.configure(r).createDecoratedFeature(
-							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(30) + 4))
+							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(19) + 4))
 							));
 					break;
 				case 2: // cactus
 					features.add(Feature.RANDOM_PATCH.configure(DefaultBiomeFeatures.CACTUS_CONFIG).createDecoratedFeature(
-							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(15) + 1))
+							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(12) + 1))
 							));
 					break;
 				case 3: // patch (of some description)
 					features.add(Feature.RANDOM_PATCH.configure(
 							settingRandom.nextInt(3) == 0 ? DefaultBiomeFeatures.MELON_PATCH_CONFIG : DefaultBiomeFeatures.PUMPKIN_PATCH_CONFIG
 							).createDecoratedFeature(
-									Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(15) + 1))
+									Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(10) + 1))
 									));
 					break;
 				case 4: // lilypad
 					features.add(Feature.RANDOM_PATCH.configure(DefaultBiomeFeatures.LILY_PAD_CONFIG).createDecoratedFeature(
-							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(15) + 1))
+							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(10) + 1))
 							));
 					break;
 				}
@@ -338,6 +431,23 @@ public class ManhattanProject implements ModInitializer {
 
 		return Decorator.COUNT_HEIGHTMAP.configure(new CountDecoratorConfig(count));
 	}
+
+	@SuppressWarnings("unchecked")
+	public static Identifier getDimensionId(DimensionType dim) {
+		
+		return ((Registry<DimensionType>) Registry.REGISTRIES
+				.get(Registry.DIMENSION_TYPE_KEY.getValue()))
+		.getId(dim);
+	}
+
+	public static Identifier dimensionType;
+	public static boolean netherGen;
+	public static boolean overwriteModded;
+	public static boolean shapeChunk;
+	public static boolean replaceSurfaceBlocks;
+	public static boolean populateVegetation;
+
+	public static Set<Biome> vanillaBiomes = new HashSet<>();
 
 	private static final BlockState GRASS_BLOCK = Blocks.GRASS_BLOCK.getDefaultState();
 
