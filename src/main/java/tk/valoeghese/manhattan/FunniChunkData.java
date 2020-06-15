@@ -19,10 +19,14 @@ import javax.annotation.Nullable;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
+import net.minecraft.world.biome.Biome;
 import net.minecraft.world.gen.decorator.CountDecoratorConfig;
 import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.feature.ConfiguredFeature;
@@ -56,7 +60,7 @@ public final class FunniChunkData {
 		List<ConfiguredFeature<?, ?>> features = new ArrayList<>();
 
 		// write GenBiome stuff
-		GenBiome.config = new SurfaceConfigProvider();
+		SurfaceConfigProvider provider = new SurfaceConfigProvider();
 		Random featureRandom = new Random(currentProgram[8]); // random indices chosen for no reason aside from they're not the key types.
 		Random settingRandom = new Random(currentProgram[2]);
 		ManhattanProject.addFeatures(features, featureRandom, settingRandom, featureRandom.nextInt(2) + 2);
@@ -84,6 +88,9 @@ public final class FunniChunkData {
 				break;
 			}
 		}
+
+
+		GenBiome.config = provider;
 
 		GenBiome.INSTANCE.setVegetalFeatures(setter -> {
 			for (ConfiguredFeature<?, ?> feature : features) {
@@ -325,6 +332,28 @@ public final class FunniChunkData {
 		x = (x >> 4); // eclipse acts weird with bitshifts and thinks there's indentation, so () prevents it from indenting the rest of the program
 		z = (z >> 4); // I would use >>= but then it's weird because I have to use {} instead
 		return (((long) x & 0x7FFFFFFF) << 32L) | ((long) z & 0x7FFFFFFF);
+	}
+
+	public static Biome yeetImpl(int gx, int gz) {
+		Object game = FabricLoader.getInstance().getGameInstance();
+		MinecraftServer server = null;
+
+		if (game instanceof MinecraftDedicatedServer) {
+			server = (MinecraftServer) game;
+		} else if (game instanceof MinecraftClient) {
+			server = ((MinecraftClient) game).getServer();
+		}
+
+		if (server == null) {
+			System.out.println("[DEBUG] no server object found. Probably saving and exiting world?");
+			return GenBiome.INSTANCE;
+		}
+
+		GenBiome.server = server;
+		FunniChunkData.load(server);
+		GenBiome.xCache = gx;
+		GenBiome.zCache = gz;
+		return GenBiome.INSTANCE;
 	}
 
 	private static Long2ObjectMap<byte[]> DATA = new Long2ObjectArrayMap<>();

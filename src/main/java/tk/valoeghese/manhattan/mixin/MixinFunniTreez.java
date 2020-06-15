@@ -9,7 +9,7 @@ import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.chunk.SurfaceChunkGenerator;
 import tk.valoeghese.manhattan.ManhattanProject;
 import tk.valoeghese.manhattan.biome.GenBiome;
-import tk.valoeghese.manhattan.utils.DimIDGetter;
+import tk.valoeghese.manhattan.utils.DimIDManager;
 
 @Mixin(ChunkGenerator.class)
 public class MixinFunniTreez {
@@ -19,7 +19,7 @@ public class MixinFunniTreez {
 			))
 	private Biome yeet(BiomeSource originalProvider, int gx, int gy, int gz) {
 		if (((Object) this) instanceof SurfaceChunkGenerator) {
-			if (ManhattanProject.populateVegetation && ((DimIDGetter) this).manhattan_getDimID().equals(ManhattanProject.dimensionType)) {
+			if (ManhattanProject.populateVegetation && ((DimIDManager) this).manhattan_getDimID().equals(ManhattanProject.dimensionType)) {
 				GenBiome.original = originalProvider.getBiomeForNoiseGen(gx, gy, gz);
 
 				if (ManhattanProject.overwriteModded || ManhattanProject.vanillaBiomes.contains(GenBiome.original)) {

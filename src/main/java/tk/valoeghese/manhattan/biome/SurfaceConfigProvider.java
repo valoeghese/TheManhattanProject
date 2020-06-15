@@ -19,8 +19,8 @@ public class SurfaceConfigProvider {
 	public SurfaceConfigProvider() {
 	}
 
-	private ByteList predicateTypes = new ByteArrayList();
-	private List<Surface> surfaces = new ArrayList<>();
+	private final ByteList predicateTypes = new ByteArrayList();
+	private final List<Surface> surfaces = new ArrayList<>();
 	private AtomicInteger surfaceCategory = new AtomicInteger(-1);
 	public List<BlockState> validSurfaceStates = new ArrayList<>();
 

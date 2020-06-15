@@ -53,7 +53,7 @@ public class MixinFunniBiome {
 
 			//NoiseProperties
 			// oceans are oceans.
-			if (GenBiome.original.getCategory() == Biome.Category.OCEAN) {
+			if (GenBiome.original.getCategory() == Biome.Category.OCEAN || GenBiome.original.getCategory() == Biome.Category.RIVER) {
 				if (resultDepth > -0.3) {
 					if (resultDepth < 0) {
 						resultDepth = -0.3f;

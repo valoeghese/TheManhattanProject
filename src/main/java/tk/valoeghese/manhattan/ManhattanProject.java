@@ -23,11 +23,11 @@ import net.minecraft.block.Blocks;
 import net.minecraft.block.LeavesBlock;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
-import net.minecraft.util.registry.Registry;
-import net.minecraft.util.registry.RegistryKey;
+import net.minecraft.world.ChunkRegion;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldAccess;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.Biomes;
-import net.minecraft.world.dimension.DimensionType;
 import net.minecraft.world.gen.decorator.BeehiveTreeDecorator;
 import net.minecraft.world.gen.decorator.CocoaBeansTreeDecorator;
 import net.minecraft.world.gen.decorator.ConfiguredDecorator;
@@ -56,6 +56,7 @@ import net.minecraft.world.gen.trunk.ForkingTrunkPlacer;
 import net.minecraft.world.gen.trunk.StraightTrunkPlacer;
 import net.minecraft.world.gen.trunk.TrunkPlacer;
 import tk.valoeghese.manhattan.biome.GenBiome;
+import tk.valoeghese.manhattan.mixin.FunniWorldGetter;
 import tk.valoeghese.zoesteriaconfig.api.ZoesteriaConfig;
 import tk.valoeghese.zoesteriaconfig.api.container.Container;
 import tk.valoeghese.zoesteriaconfig.api.container.WritableConfig;
@@ -68,34 +69,13 @@ public class ManhattanProject implements ModInitializer {
 	@Override
 	public void onInitialize() {
 		try {
-			/*
-			if (configFile.createNewFile()) {
-				config = ZoesteriaConfig.createWritableConfig(new LinkedHashMap<>());
-				config.addComment("== Manhattan Project Config ==");
-				config.putStringValue("dimensionType", "minecraft:overworld");
-				config.putBooleanValue("treatLikeNether", false);
-				config.addComment("Whether to replace the generation of non-vanilla biomes.");
-				config.putBooleanValue("overwriteModdedBiomes", false);
-
-				EditableContainer advanced = ZoesteriaConfig.createWritableConfig(new LinkedHashMap<>());
-				advanced.addComment("Whether The Manhattan Project will replace the chunk shape stage");
-				advanced.putBooleanValue("shapeChunk", true);
-				advanced.addComment("Whether The Manhattan Project will replace the 'build surface' stage");
-				advanced.putBooleanValue("replaceSurfaceBlocks", true);
-				advanced.addComment("Whether The Manhattan Project will replace the vegetal decoration (trees, grasses) stage");
-				advanced.putBooleanValue("populateVegetation", true);
-
-				config.putMap("advanced", advanced.asMap());
-			} else {
-				config = ZoesteriaConfig.loadConfig(configFile);
-			}*/
-
 			File configFile = new File(FabricLoader.getInstance().getConfigDirectory(), "manhattan_project.cfg");
 			configFile.createNewFile();
 
 			WritableConfig config = ZoesteriaConfig.loadConfigWithDefaults(configFile, ConfigTemplate.builder()
-					.addComment(new Comment("== Manhattan Project Config =="))
-					.addDataEntry("dimensionType", "minecraft:overworld")
+					.addComment(new Comment("## Manhattan Project Config ###"))
+					.addComment(new Comment(" Note for modded dimensions: any modded dimensions that are set as the dimension here must use a SurfaceChunkGenerator internally for this to work (unless they manually add compatability on their end)."))
+					.addDataEntry("dimension", "minecraft:overworld")
 					.addDataEntry("treatLikeNether", false)
 					.addComment(new Comment(" Whether to replace the generation of non-vanilla biomes."))
 					.addDataEntry("overwriteModdedBiomes", false)
@@ -111,7 +91,7 @@ public class ManhattanProject implements ModInitializer {
 
 			config.writeToFile(configFile);
 
-			dimensionType = new Identifier(config.getStringValue("dimensionType"));
+			dimensionType = new Identifier(config.getStringValue("dimension"));
 			netherGen = config.getBooleanValue("treatLikeNether");
 			overwriteModded = config.getBooleanValue("overwriteModdedBiomes");
 
@@ -269,7 +249,7 @@ public class ManhattanProject implements ModInitializer {
 
 	public static void addFeatures(List<ConfiguredFeature<?,?>> features, Random featureRandom, Random settingRandom, int count) {
 		while (count --> 0) {
-			if (count == 1 && featureRandom.nextInt(3) > 0) { // tree
+			if (count == 1 && featureRandom.nextInt(5) < 3) { // tree
 				int i = featureRandom.nextInt(4) == 0 ? 0 : 1;
 				Pair<Class, BiFunction<FeatureConfig, Random, ConfiguredFeature>> chosen = TREES.get(i);
 				features.add(chosen.getRight().apply(FEATURE_CONFIG_FACTORIES.get(chosen.getLeft()).apply(settingRandom), settingRandom));
@@ -303,7 +283,7 @@ public class ManhattanProject implements ModInitializer {
 					}
 
 					features.add(Feature.RANDOM_PATCH.configure(r).createDecoratedFeature(
-							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(19) + 4))
+							Decorator.COUNT_HEIGHTMAP_DOUBLE.configure(new CountDecoratorConfig(settingRandom.nextInt(16) + 4))
 							));
 					break;
 				case 2: // cactus
@@ -432,12 +412,14 @@ public class ManhattanProject implements ModInitializer {
 		return Decorator.COUNT_HEIGHTMAP.configure(new CountDecoratorConfig(count));
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Identifier getDimensionId(DimensionType dim) {
-		
-		return ((Registry<DimensionType>) Registry.REGISTRIES
-				.get(Registry.DIMENSION_TYPE_KEY.getValue()))
-		.getId(dim);
+	public static Identifier getDimensionId(WorldAccess world) {
+		if (world instanceof ChunkRegion) {
+			return ((FunniWorldGetter) world).getWorld().getRegistryKey().getValue();
+		} else if (world instanceof World) {
+			return ((World) world).getRegistryKey().getValue();
+		} else {
+			throw new RuntimeException("Unsupported world access for method getDimensionId: " + world.getClass());
+		}
 	}
 
 	public static Identifier dimensionType;
