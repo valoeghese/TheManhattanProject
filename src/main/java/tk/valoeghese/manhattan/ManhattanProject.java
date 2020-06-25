@@ -218,7 +218,7 @@ public class ManhattanProject implements ModInitializer {
 			BlockState validSurface = GRASS_BLOCK;
 
 			if (!GenBiome.config.validSurfaceStates.isEmpty()) {
-				validSurface = GenBiome.config.validSurfaceStates.get(GenBiome.config.validSurfaceStates.size());
+				validSurface = GenBiome.config.validSurfaceStates.get(GenBiome.config.validSurfaceStates.size() - 1);
 			}
 
 			Pair<BlockState, BlockState> type = TREE_TYPES.get(rand.nextInt(TREE_TYPES.size()));
