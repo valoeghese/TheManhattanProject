@@ -10,8 +10,5 @@
     "MixinFunniTreez",
     "MixinFunniSetDimId",
     "MixinFunniWorldgen"
-  ],
-  "server": [
-    "MixinMinecraftDedicatedServer"
   ]
 }

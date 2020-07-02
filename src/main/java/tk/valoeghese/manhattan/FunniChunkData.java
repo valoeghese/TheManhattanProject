@@ -22,10 +22,7 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
@@ -339,24 +336,21 @@ public final class FunniChunkData {
 	}
 
 	public static Biome yeetImpl(int gx, int gz) {
-		if (GenBiome.server == null) {
-			MinecraftServer server;
+		MinecraftServer server;
 
-			if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
-				server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
-			} else {
-				server = ClientServerAccess.getServer();
-			}
-
-			if (server == null) {
-				System.out.println("[DEBUG] no server object found. Probably saving and exiting world?");
-				return GenBiome.INSTANCE;
-			}
-
-			GenBiome.server = server;
+		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
+			server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
+		} else {
+			server = ClientServerAccess.getServer();
 		}
 
-		FunniChunkData.load(GenBiome.server);
+		if (server == null) {
+			System.out.println("[DEBUG] no server object found. Probably saving and exiting world?");
+			return GenBiome.INSTANCE;
+		}
+
+		GenBiome.server = server;
+		FunniChunkData.load(server);
 		GenBiome.xCache = gx;
 		GenBiome.zCache = gz;
 		return GenBiome.INSTANCE;
