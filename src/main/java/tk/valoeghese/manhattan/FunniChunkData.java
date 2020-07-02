@@ -19,10 +19,10 @@ import javax.annotation.Nullable;
 import it.unimi.dsi.fastutil.longs.Long2ObjectArrayMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
+
+import net.fabricmc.api.EnvType;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.dedicated.MinecraftDedicatedServer;
 import net.minecraft.util.WorldSavePath;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldProperties;
@@ -35,6 +35,7 @@ import net.minecraft.world.gen.feature.Feature;
 import tk.valoeghese.manhattan.biome.GenBiome;
 import tk.valoeghese.manhattan.biome.NoiseProperties;
 import tk.valoeghese.manhattan.biome.SurfaceConfigProvider;
+import tk.valoeghese.manhattan.client.ClientServerAccess;
 import tk.valoeghese.manhattan.utils.FunniMessageCompiler;
 
 public final class FunniChunkData {
@@ -335,13 +336,12 @@ public final class FunniChunkData {
 	}
 
 	public static Biome yeetImpl(int gx, int gz) {
-		Object game = FabricLoader.getInstance().getGameInstance();
-		MinecraftServer server = null;
+		MinecraftServer server;
 
-		if (game instanceof MinecraftDedicatedServer) {
-			server = (MinecraftServer) game;
-		} else if (game instanceof MinecraftClient) {
-			server = ((MinecraftClient) game).getServer();
+		if (FabricLoader.getInstance().getEnvironmentType() == EnvType.SERVER) {
+			server = (MinecraftServer) FabricLoader.getInstance().getGameInstance();
+		} else {
+			server = ClientServerAccess.getServer();
 		}
 
 		if (server == null) {
