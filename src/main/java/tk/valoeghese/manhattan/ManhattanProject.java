@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -193,11 +194,13 @@ public class ManhattanProject implements ModInitializer {
 
 		FEATURE_CONFIG_FACTORIES.put(TreeFeatureConfig.class, rand -> {
 			Pair<BlockState, BlockState> type = TREE_TYPES.get(rand.nextInt(TREE_TYPES.size()));
+			AtomicInteger yes = new AtomicInteger(0);
+
 			TreeFeatureConfig.Builder builder = new TreeFeatureConfig.Builder(
 					new SimpleBlockStateProvider(type.getLeft()),
 					new SimpleBlockStateProvider(type.getRight()),
-					createFoliagePlacer(rand),
-					createTrunkPlacer(rand),
+					createFoliagePlacer(rand, yes),
+					createTrunkPlacer(rand, yes.get()),
 					new TwoLayersFeatureSize(1, 0, 1));
 
 			if (rand.nextInt(3) != 0) {
@@ -311,8 +314,13 @@ public class ManhattanProject implements ModInitializer {
 	private static final BeehiveTreeDecorator BUZZ1 = new BeehiveTreeDecorator(0.002f);
 	private static final BeehiveTreeDecorator BUZZ2 = new BeehiveTreeDecorator(0.035f);
 
-	private static TrunkPlacer createTrunkPlacer(Random rand) {
+	private static TrunkPlacer createTrunkPlacer(Random rand, int minBaseHeight) {
 		int height = rand.nextInt(11) + 2;
+
+		if (height < minBaseHeight) {
+			height = minBaseHeight;
+		}
+
 		int randHeight = rand.nextInt(4);
 
 		if (rand.nextInt(3) == 0) {
@@ -322,7 +330,7 @@ public class ManhattanProject implements ModInitializer {
 		}
 	}
 
-	private static FoliagePlacer createFoliagePlacer(Random rand) {
+	private static FoliagePlacer createFoliagePlacer(Random rand, AtomicInteger minBaseHeight) {
 		int type = rand.nextInt(5);
 
 		if (type == 4) {
@@ -358,7 +366,6 @@ public class ManhattanProject implements ModInitializer {
 		switch (type) {
 		case 0:
 			int height = rand.nextInt(5);
-
 			return new BlobFoliagePlacer(radius, randomRadius, offset, randomOffset, height);
 		case 1:
 			return new AcaciaFoliagePlacer(radius, randomRadius, offset, randomOffset);
@@ -376,6 +383,7 @@ public class ManhattanProject implements ModInitializer {
 				foliageHeightRandom = 0;
 			}
 
+			minBaseHeight.set(foliageHeight + foliageHeightRandom);
 			return new PineFoliagePlacer(radius, randomRadius, offset, randomOffset, foliageHeight, foliageHeightRandom);
 		default: // 4 is already handled earlier
 			return null;
